@@ -25,14 +25,14 @@ O **Aqualy App** é a interface mobile do sistema de monitoramento inteligente d
 - Tela de boas-vindas com slideshow
 - Criação de conta com validação
 - Login seguro
-- Seleção de perfil de uso (Doméstico, Empresarial, Indústria, Agrícola)
+- Configuração inicial do perfil
 
 ### 🏠 Dashboard
 - Visualização de todos os medidores cadastrados
-- Status em tempo real (ligado/desligado)
+- Status em tempo real de cada medidor
 - Consumo atual e vazão instantânea
 - Estatísticas mensais agregadas
-- Controle remoto dos medidores (ligar/desligar)
+- Acesso rápido aos detalhes de cada dispositivo
 
 ### 📊 Relatórios e estatísticas
 - Gráficos de consumo por período (7, 14, 30, 90 dias)
@@ -49,10 +49,10 @@ O **Aqualy App** é a interface mobile do sistema de monitoramento inteligente d
 
 ### ⚙️ Configurações
 - Gerenciamento de medidores
-- Definição de limites de consumo
-- Configuração de interrupção automática
+- Definição de limites de consumo e alertas
+- Configuração de notificações personalizadas
 - Edição de perfil e dados do usuário
-- Cadastro de novos dispositivos
+- Cadastro e exclusão de dispositivos
 
 ---
 
@@ -122,8 +122,8 @@ O app se comunica com a API REST desenvolvida em Quarkus através de endpoints H
 #### Medidores
 - `GET /medidores/usuario/{usuarioId}` — Lista medidores do usuário
 - `GET /medidores/{id}` — Detalhes de um medidor
-- `PUT /medidores/{id}` — Atualiza configurações
-- `PUT /medidores/{id}/power/toggle` — Liga/desliga medidor
+- `PUT /medidores/{id}` — Atualiza configurações do medidor
+- `DELETE /medidores/{id}` — Remove medidor do sistema
 
 #### Leituras e tempo real
 - `GET /leituras/tempo-real/medidor/{medidorId}` — Dados em tempo real
@@ -148,7 +148,7 @@ O app utiliza **Provider** para gerenciamento de estado global através da class
 - `medidores` — Lista de medidores cadastrados
 - `selectedInterval` — Período selecionado para análise
 - `insightSelectedMedidor` — Medidor selecionado na tela de insights
-- `profileTypes` — Tipos de perfil disponíveis
+- `alertsConfig` — Configurações de alertas e notificações
 
 ### Persistência local:
 - Utiliza **SharedPreferences** para manter dados entre sessões
@@ -163,10 +163,6 @@ O app utiliza **Provider** para gerenciamento de estado global através da class
 - **MedidorCard** — Exibe informações de um medidor
 - **RealtimeCards** — Dados em tempo real
 - **Cards** — Card genérico com estatísticas
-
-### 🔘 Botões
-- **PowerButton** — Controle liga/desliga com animação
-- **PowerButtonSmall** — Versão compacta
 
 ### 📋 Listas
 - **SuggestionList** — Lista de sugestões da IA
@@ -214,8 +210,8 @@ O app utiliza **GoRouter** com navegação baseada em rotas nomeadas.
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/seu-usuario/aqualy-app.git
-cd aqualy-app
+git clone https://github.com/tanzbr/aqualy.git
+cd aqualy/aqualy-app
 
 # Instalar dependências
 flutter pub get

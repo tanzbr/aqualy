@@ -2,7 +2,7 @@
 
 ### 🧩 Descrição geral
 
-O **Aqualy Sensor** é o sistema embarcado responsável pela coleta de dados de vazão e consumo de água em tempo real. Desenvolvido para **ESP32**, o sensor se conecta via **WebSocket SSL** ao backend Quarkus, enviando leituras precisas e recebendo comandos remotos para controle do fluxo de água.
+O **Aqualy Sensor** é o sistema embarcado responsável pela coleta de dados de vazão e consumo de água em tempo real. Desenvolvido para **ESP32**, o sensor se conecta via **WebSocket SSL** ao backend Quarkus, enviando leituras precisas de forma contínua e confiável.
 
 ---
 
@@ -24,19 +24,15 @@ O **Aqualy Sensor** é o sistema embarcado responsável pela coleta de dados de 
 
 | Componente | Modelo/Especificação | Função |
 |------------|---------------------|---------|
-| **Microcontrolador** | ESP32 | Processamento e conectividade |
-| **Sensor de Vazão** | YF-S201 | Medição de fluxo de água |
-| **LED RGB** | NeoPixel WS2812B | Indicador visual de status |
-| **Relé** | 1 canal (GPIO 8) | Controle de interrupção do fluxo |
-| **Botão Touch** | GPIO 4 | Controle manual liga/desliga |
+| **Microcontrolador** | ESP32 | Processamento e conectividade Wi-Fi |
+| **Sensor de Vazão** | YF-S201 | Medição precisa de fluxo de água |
+| **LED RGB** | NeoPixel WS2812B | Indicador visual de status de conexão |
 
 ### Pinagem:
 
 ```
 GPIO 15 → Sensor de Vazão (YF-S201)
-GPIO 8  → Relé (controle de fluxo)
-GPIO 48 → LED NeoPixel
-GPIO 4  → Botão Touch
+GPIO 48 → LED NeoPixel (indicador de status)
 ```
 
 ---
@@ -50,8 +46,7 @@ GPIO 4  → Botão Touch
 3. **Leitura contínua** → Monitora pulsos do sensor de vazão
 4. **Cálculo de vazão** → Processa dados a cada 1 segundo
 5. **Envio de dados** → Transmite leituras a cada 10 segundos
-6. **Recepção de comandos** → Responde a comandos remotos (ON/OFF)
-7. **Controle local** → Permite acionamento via botão touch
+6. **Monitoramento** → Indica status de conexão via LED RGB
 
 ### 💡 Indicadores LED:
 
@@ -69,7 +64,7 @@ O sensor utiliza um protocolo baseado em texto via WebSocket.
 
 ### 📤 Mensagens enviadas (Sensor → Backend):
 
-#### 1. Envio de leituras
+#### Envio de leituras
 ```
 01;{medidorId};{consumoLitros};{vazaoLMin}
 ```
@@ -81,30 +76,7 @@ O sensor utiliza um protocolo baseado em texto via WebSocket.
 - `consumoLitros` — Consumo acumulado no período (3 decimais)
 - `vazaoLMin` — Vazão média em litros/minuto (2 decimais)
 
-#### 2. Envio de status
-```
-02;{medidorId};{ON/OFF}
-```
-**Exemplo:** `02;1;ON`
-
-**Descrição:**
-- `02` — Tipo de mensagem (status)
-- `medidorId` — ID do medidor
-- `ON/OFF` — Estado do relé
-
-### 📥 Mensagens recebidas (Backend → Sensor):
-
-#### 3. Controle remoto
-```
-03;{comando}
-```
-**Exemplos:**
-- `03;ON` — Liga o relé (libera fluxo)
-- `03;OFF` — Desliga o relé (bloqueia fluxo)
-
-**Descrição:**
-- `03` — Tipo de mensagem (comando)
-- `comando` — Ação a ser executada
+**Frequência:** Enviado a cada 10 segundos contendo dados agregados do período
 
 ---
 
@@ -203,17 +175,16 @@ wss://aqualy.tanz.dev/ws/sensor/{medidorId}
 
 ```
 ┌─────────┐       WebSocket SSL      ┌─────────┐       REST API      ┌──────────┐
-│ ESP32   │ ────────────────────────► │ Backend │ ──────────────────► │ Flutter  │
-│ Sensor  │                           │ Quarkus │                     │   App    │
-└─────────┘ ◄──────────────────────── └─────────┘                     └──────────┘
-              Comandos ON/OFF
+│ ESP32   │ ────────────────────────► │ Backend │ ◄──────────────────│ Flutter  │
+│ Sensor  │  Envia leituras           │ Quarkus │  Consulta dados     │   App    │
+└─────────┘                           └─────────┘                     └──────────┘
 ```
 
-1. **Sensor → Backend:** Envia leituras a cada 10s via WebSocket
-2. **Backend:** Processa, valida e armazena no banco de dados
-3. **App → Backend:** Solicita dados via API REST
-4. **Backend → Sensor:** Envia comandos de controle via WebSocket
-5. **App:** Visualiza dados em tempo real e controla dispositivos
+1. **Sensor → Backend:** Envia leituras a cada 10s via WebSocket SSL
+2. **Backend:** Processa, valida e armazena no banco de dados PostgreSQL
+3. **Backend:** Gera insights com IA baseado nos padrões de consumo
+4. **App → Backend:** Solicita dados via API REST
+5. **App:** Exibe dashboards, gráficos e insights ao usuário
 
 ---
 
@@ -222,15 +193,13 @@ wss://aqualy.tanz.dev/ws/sensor/{medidorId}
 ✅ Conexão WiFi com reconexão automática  
 ✅ Cliente WebSocket SSL com TLS  
 ✅ Leitura precisa de vazão com sensor YF-S201  
-✅ Cálculo de consumo acumulado  
-✅ Envio periódico de dados (10 segundos)  
-✅ Recepção de comandos remotos  
-✅ Controle de relé para interrupção de fluxo  
-✅ Botão touch para controle manual  
-✅ LED RGB com indicação de status  
-✅ Debounce para botão touch  
+✅ Cálculo de consumo acumulado em tempo real  
+✅ Envio periódico de dados a cada 10 segundos  
+✅ LED RGB com indicação de status de conexão  
 ✅ Protocolo de comunicação customizado  
-✅ Monitoramento via Serial  
+✅ Calibração ajustável do sensor  
+✅ Monitoramento via Serial para debug  
+✅ Tratamento de erros e reconexão automática  
 
 ---
 
@@ -266,25 +235,29 @@ String payload = "01;" + device_id + ";" +
 ## 🐛 Troubleshooting
 
 ### 🔴 LED vermelho permanente
-- Verificar credenciais WiFi
-- Confirmar se o backend está online
+- Verificar credenciais WiFi no código
+- Confirmar se o backend está online e acessível
 - Verificar URL e porta do WebSocket
+- Testar conectividade de rede
 
 ### 📡 Conecta WiFi mas não conecta WebSocket
 - Verificar caminho do WebSocket (`/ws/sensor/{id}`)
 - Confirmar que o ID do medidor existe no backend
-- Testar conectividade com o servidor
+- Validar certificado SSL/TLS
+- Checar firewall e portas
 
 ### 💧 Vazão sempre zerada
 - Verificar conexão física do sensor (GPIO 15)
-- Confirmar alimentação do sensor (5V)
+- Confirmar alimentação do sensor (5V DC)
 - Testar continuidade do cabo
-- Ajustar `calibrationFactor`
+- Ajustar `calibrationFactor` para o sensor específico
+- Verificar se há fluxo de água real
 
 ### 🔵 LED azul permanente
-- Possível travamento no envio
+- Possível travamento na transmissão de dados
 - Reiniciar o ESP32
-- Verificar Serial Monitor para erros
+- Verificar Serial Monitor para mensagens de erro
+- Validar conectividade com o backend
 
 ---
 
@@ -298,10 +271,10 @@ String payload = "01;" + device_id + ";" +
 - **Fator K:** ~4.5 pulsos/litro (depende do modelo)
 
 ### Consumo do sistema:
-- **ESP32 ativo:** ~160-260mA
-- **LED NeoPixel:** ~20mA (por cor)
-- **Relé:** ~70-100mA
-- **Total estimado:** ~300-400mA @ 5V
+- **ESP32 ativo (WiFi):** ~160-260mA
+- **Sensor YF-S201:** ~15mA
+- **LED NeoPixel:** ~20mA (por cor ativa)
+- **Total estimado:** ~200-300mA @ 5V
 
 ---
 

@@ -81,8 +81,8 @@ src/
 - `GET /medidores` — lista medidores
 - `GET /medidores/{id}` — detalhe do medidor
 - `GET /medidores/usuario/{usuarioId}` — por usuário
-- `PUT /medidores/{id}/power?ligado=true|false` — atualiza estado e retorna `MedidorResponseDTO`
-- `PUT /medidores/{id}/power/toggle` — alterna estado e retorna `MedidorResponseDTO`
+- `PUT /medidores/{id}` — atualiza configurações do medidor
+- `DELETE /medidores/{id}` — remove medidor do sistema
 
 #### 🔹 Leituras, Estatísticas e Tempo real
 - `GET /leituras/estatisticas/medidor/{medidorId}?dataInicio&dataFim`
@@ -100,9 +100,8 @@ Observação: as leituras em tempo real são recebidas via WebSocket (ver abaixo
 #### 🔹 WebSocket (sensores)
 - Endpoint: `ws://<host>:<port>/ws/sensor/{uuid}`
 - Mensagens de entrada (sensor → servidor):
-  - `01;{medidorId};{consumoLitros};{vazaoLMin}` — registra leitura
-- Comandos de saída (servidor → sensor):
-  - `03;ON` ou `03;OFF` — liga/desliga
+  - `01;{medidorId};{consumoLitros};{vazaoLMin}` — registra leitura de vazão e consumo
+  - `02;{medidorId};{status}` — atualiza status do sensor (ONLINE/OFFLINE)
 
 ---
 
@@ -110,9 +109,9 @@ Observação: as leituras em tempo real são recebidas via WebSocket (ver abaixo
 
 Entidades e relacionamentos (simplificado):
 
-- `Usuario (id, nome, email[único], senha, valorM)`
+- `Usuario (id, nome, email[único], senha, valorM3)`
   - 1:N `Usuario` → `Medidor`
-- `Medidor (id, nome, localizacao, limite, ligado, interromper, usuario_id)`
+- `Medidor (id, nome, localizacao, limite_consumo, alerta_ativo, usuario_id)`
   - N:1 `Medidor` → `Usuario`
   - 1:N `Medidor` → `Leitura`
 - `Leitura (id, medidor_id, litros, litros_acumulado, vazao_l_min, data_hora)`

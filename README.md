@@ -4,7 +4,7 @@
 
 <img src="aqualy-app/assets/images/logo_aqualy.png" alt="Logo Aqualy" width="100"/>
 
-**Automação hídrica para Smart Homes • Monitoramento com IA • Controle inteligente**
+**Automação hidráulica para Smart Homes • Monitoramento com IA • Controle inteligente**
 
 **[📱 App](./aqualy-app/README.md)** • **[⚙️ Backend](./aqualy-backend/README.md)** • **[🔧 Sensor](./aqualy-sensor/README.md)**
 
@@ -19,11 +19,11 @@
 
 ## 📖 Sobre o projeto
 
-O **Aqualy** é uma solução inovadora de **automação hídrica para casas inteligentes** que integra hardware IoT, backend robusto e aplicação móvel. Desenvolvido para o **HACKÁGUA - UNITINS**, o sistema preenche uma lacuna importante no mercado de smart homes: enquanto a maioria das soluções inteligentes foca em automação elétrica, o Aqualy traz **inteligência e automação para a gestão de água**.
+O **Aqualy** é uma solução inovadora de **automação hidráulica para casas inteligentes** que integra hardware IoT, backend robusto e aplicação móvel. Desenvolvido para o **HACKÁGUA - UNITINS**, o sistema preenche uma lacuna importante no mercado de smart homes: enquanto a maioria das soluções inteligentes foca em automação elétrica, o Aqualy traz **inteligência e automação para a gestão de água**.
 
 ### 🎯 Diferencial
 
-**Automação hídrica inteligente** — Monitoramento em tempo real, insights gerados por IA e controle automático do fluxo de água para casas inteligentes, promovendo consumo consciente e sustentável.
+**Automação hidráulica inteligente** — Monitoramento em tempo real, insights gerados por IA e análise inteligente do consumo de água para casas inteligentes, promovendo consumo consciente e sustentável.
 
 ---
 
@@ -34,8 +34,8 @@ O sistema é composto por **três camadas** que trabalham de forma integrada:
 ```
  SENSOR (ESP32)  →  BACKEND (Quarkus)  →  APP (Flutter)
  Mede vazão         Processa dados         Exibe ao usuário
- Controla relé      Gera insights IA       Envia comandos
- Envia via WS       Armazena histórico     Interface móvel
+ Envia leituras     Gera insights IA       Visualiza dados
+ WebSocket SSL      Armazena histórico     Interface móvel
 ```
 
 | Componente | Tecnologias | Documentação |
@@ -50,7 +50,7 @@ O sistema é composto por **três camadas** que trabalham de forma integrada:
 
 ```bash
 # 1. Clonar repositório
-git clone https://github.com/giseleveloso/hackagua.git
+git clone https://github.com/tanzbr/aqualy.git
 cd aqualy
 
 # 2. Backend (porta 10017)
@@ -71,20 +71,20 @@ cd aqualy-app && flutter run
 
 - 📈 **Monitoramento em tempo real** — Vazão instantânea e consumo acumulado de todos os pontos da casa
 - 🧠 **Inteligência Artificial** — Análise de padrões, detecção de anomalias e sugestões de economia
-- ⚙️ **Automação inteligente** — Controle remoto e interrupção automática por limite ou horário
-- 📊 **Relatórios detalhados** — Histórico, gráficos e comparativos de consumo
-- 🚨 **Alertas em tempo real** — Notificações de vazamentos, consumo excessivo e limites atingidos
+- 📊 **Relatórios detalhados** — Histórico, gráficos e comparativos de consumo por período
+- 🎯 **Gerenciamento de medidores** — Cadastro, configuração de limites e edição de dispositivos
+- 📉 **Análise de consumo** — Visualização de gastos em reais e comparativos mensais
 
 ---
 
 ## 🔬 Tecnologias e Inovação
 
 **Hardware IoT:** Sensor de vazão YF-S201 integrado com ESP32, comunicação WebSocket SSL segura  
-**Backend escalável:** API REST em Quarkus (Java), processamento em tempo real, banco PostgreSQL  
+**Backend escalável:** API REST em Quarkus (Java), processamento em tempo real, PostgreSQL (dev) e MariaDB (prod)  
 **IA integrada:** Google Gemini para análise preditiva e sugestões personalizadas  
 **App nativo:** Flutter multiplataforma com interface moderna e responsiva
 
-**Diferencial:** Primeira solução de automação hídrica completa para smart homes no mercado brasileiro, integrando hardware, software e inteligência artificial em uma única plataforma.
+**Diferencial:** Primeira solução de automação hidráulica completa para smart homes no mercado brasileiro, integrando hardware, software e inteligência artificial em uma única plataforma.
 
 ---
 
