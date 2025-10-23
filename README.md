@@ -2,9 +2,11 @@
 
 <div align="center">
 
-![Logo Aqualy](aqualy-app/assets/images/logo_aqualy.png)
+<img src="aqualy-app/assets/images/logo_aqualy.png" alt="Logo Aqualy" width="100"/>
 
 **Automação hídrica para Smart Homes • Monitoramento com IA • Controle inteligente**
+
+**[📱 App](./aqualy-app/README.md)** • **[⚙️ Backend](./aqualy-backend/README.md)** • **[🔧 Sensor](./aqualy-sensor/README.md)**
 
 [![HACKÁGUA](https://img.shields.io/badge/HACKÁGUA-UNITINS-blue?style=for-the-badge)](https://unitins.br)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
