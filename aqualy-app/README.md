@@ -37,7 +37,7 @@ O **Aqualy App** é a interface mobile do sistema de monitoramento inteligente d
 - Gráficos de consumo por período (7, 14, 30, 90 dias)
 - Análise de gastos em reais
 - Comparativo de economia mensal
-- Filtros customizados por data
+- Filtros customizados por intervalo de tempo
 - Métricas de vazão média e picos
 
 ### 🧠 Insights com IA
@@ -48,10 +48,8 @@ O **Aqualy App** é a interface mobile do sistema de monitoramento inteligente d
 
 ### ⚙️ Configurações
 - Gerenciamento de medidores
-- Definição de limites de consumo e alertas
-- Configuração de notificações personalizadas
+- Definição de limites de consumo
 - Edição de perfil e dados do usuário
-- Cadastro e exclusão de dispositivos
 
 ---
 
@@ -125,8 +123,8 @@ O app se comunica com a API REST desenvolvida em Quarkus através de endpoints H
 - `DELETE /medidores/{id}` — Remove medidor do sistema
 
 #### Leituras e tempo real
-- `GET /leituras/tempo-real/medidor/{medidorId}` — Dados em tempo real
-- `GET /leituras/tempo-real/usuario/{usuarioId}` — Todos os medidores
+- `GET /leituras/tempo-real/medidor/{medidorId}` — Dados em tempo real de um medidor
+- `GET /leituras/tempo-real/usuario/{usuarioId}` — Todos os medidores de um usuário
 
 #### Estatísticas
 - `GET /estatisticas/usuario/{id}` — Estatísticas mensais
@@ -135,59 +133,6 @@ O app se comunica com a API REST desenvolvida em Quarkus através de endpoints H
 
 #### Sugestões IA
 - `GET /sugestoes/medidor/{id}` — Insights personalizados
-
----
-
-## 🔧 Gerenciamento de estado
-
-O app utiliza **Provider** para gerenciamento de estado global através da classe `FFAppState`.
-
-### Estados principais:
-- `loggedUser` — Dados do usuário autenticado
-- `medidores` — Lista de medidores cadastrados
-- `selectedInterval` — Período selecionado para análise
-- `insightSelectedMedidor` — Medidor selecionado na tela de insights
-- `alertsConfig` — Configurações de alertas e notificações
-
----
-
-## 🧩 Componentes reutilizáveis
-
-### 🎴 Cards
-- **MedidorCard** — Exibe informações de um medidor
-- **RealtimeCards** — Dados em tempo real
-- **Cards** — Card genérico com estatísticas
-
-### 📋 Listas
-- **SuggestionList** — Lista de sugestões da IA
-- **EmptyList** — Estado vazio com ilustração
-
-### 🎨 Outros
-- **CustomAppBar** — Barra superior personalizada
-- **Header** — Cabeçalho de seções
-- **Menu** — Menu lateral
-
----
-
-## 📱 Navegação
-
-O app utiliza **GoRouter** com navegação baseada em rotas nomeadas.
-
-### Principais rotas:
-
-| Rota | Descrição | Auth |
-|------|-----------|------|
-| `/` | Splash / Home | Condicional |
-| `/splash` | Tela inicial | Não |
-| `/onboarding-slideshow` | Apresentação | Não |
-| `/sign-in` | Login | Não |
-| `/onboarding-createaccount` | Cadastro | Não |
-| `/home` | Dashboard | Sim |
-| `/stats` | Relatórios | Sim |
-| `/insights` | Insights IA | Sim |
-| `/medidor-details` | Detalhes do medidor | Sim |
-| `/settings` | Configurações | Sim |
-| `/add-device` | Adicionar medidor | Sim |
 
 ---
 
@@ -258,17 +203,6 @@ flutter build ios --release
 # Build Web
 flutter build web --release
 ```
-
----
-
-## 🎨 Design e UI/UX
-
-- **Tema customizado** com `FlutterFlowTheme`
-- **Fonte principal:** Google Fonts
-- **Ícones:** Font Awesome + Material Icons
-- **Animações:** flutter_animate para transições
-- **Gráficos:** fl_chart com estilo customizado
-- **Responsividade:** Adapta-se a diferentes tamanhos de tela
 
 ---
 

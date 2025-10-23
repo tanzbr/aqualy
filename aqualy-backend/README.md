@@ -3,14 +3,13 @@
 ### 🧩 Descrição geral
 
 O **Aqualy** é uma aplicação completa para monitoramento de **vazão e consumo de água** em tempo real.
-O sistema coleta dados de sensores físicos, envia ao backend desenvolvido em **Quarkus**, e exibe as informações para o usuário final em uma interface desenvolvida em **FlutterFlow**.
+O sistema coleta dados de sensores físicos, envia ao backend desenvolvido em **Quarkus**, e exibe as informações para o usuário final em um aplicativo mobile.
 
 ---
 
 ## 🚀 Tecnologias utilizadas
 
 **Backend:** Quarkus, Java, RESTEasy, Hibernate, PostgreSQL (para homologação)
-**Frontend:** FlutterFlow 
 **Banco de dados:** MariaDB
 **Integração:** HTTP para integrar com o sensor
 
