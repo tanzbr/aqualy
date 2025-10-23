@@ -9,9 +9,9 @@ O sistema coleta dados de sensores físicos, envia ao backend desenvolvido em **
 
 ## 🚀 Tecnologias utilizadas
 
-**Backend:** Quarkus, Java, RESTEasy, Hibernate, PostgreSQL (para homologação)
-**Banco de dados:** MariaDB
-**Integração:** HTTP para integrar com o sensor
+**Backend:** Quarkus, Java, RESTEasy, Hibernate, PostgreSQL (para homologação)\n
+**Banco de dados:** MariaDB\n
+**Integração:** HTTP para integrar com o sensor\n
 
 ---
 
