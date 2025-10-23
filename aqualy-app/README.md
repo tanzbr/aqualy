@@ -13,8 +13,7 @@ O **Aqualy App** é a interface mobile do sistema de monitoramento inteligente d
 **Gerenciamento de estado:** Provider  
 **Navegação:** GoRouter  
 **Backend:** API REST Quarkus (integração HTTP)  
-**Gráficos:** fl_chart  
-**Armazenamento local:** SharedPreferences  
+**Gráficos:** fl_chart
 **Ícones e fontes:** Google Fonts, Font Awesome  
 
 ---
@@ -149,11 +148,6 @@ O app utiliza **Provider** para gerenciamento de estado global através da class
 - `selectedInterval` — Período selecionado para análise
 - `insightSelectedMedidor` — Medidor selecionado na tela de insights
 - `alertsConfig` — Configurações de alertas e notificações
-
-### Persistência local:
-- Utiliza **SharedPreferences** para manter dados entre sessões
-- Usuário logado persiste localmente
-- Preferências de visualização são salvas
 
 ---
 
