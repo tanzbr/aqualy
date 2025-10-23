@@ -76,7 +76,7 @@ O sensor utiliza um protocolo baseado em texto via WebSocket.
 - `consumoLitros` — Consumo acumulado no período (3 decimais)
 - `vazaoLMin` — Vazão média em litros/minuto (2 decimais)
 
-**Frequência:** Enviado a cada 10 segundos contendo dados agregados do período
+**Frequência:** Enviado a cada 3 segundos contendo dados agregados do período
 
 ---
 
@@ -99,18 +99,6 @@ const uint16_t ws_port = 443;
 const char* ws_path = "/ws/sensor/1";  // Substitua "1" pelo ID do medidor
 const char* device_id = "1";            // ID do dispositivo
 ```
-
-### 🎛️ Calibração do sensor
-
-O fator de calibração pode ser ajustado para o sensor YF-S201:
-
-```cpp
-float calibrationFactor = 4.5;  // Pulsos por litro (ajustar conforme necessário)
-```
-
-**Calibração recomendada:**
-- Valor padrão: `4.5` pulsos/litro
-- Para maior precisão, realizar teste com volume conhecido
 
 ---
 
@@ -146,17 +134,6 @@ Buscar e instalar:
 4. Configure as credenciais WiFi e WebSocket
 5. Clique em `Upload` (Ctrl+U)
 
-### 🔍 Monitoramento
-
-Abra o Serial Monitor (115200 baud) para visualizar:
-- Status de conexão WiFi
-- Status de conexão WebSocket
-- Leituras de vazão em tempo real
-- Envio de dados
-- Recepção de comandos
-
----
-
 ## 🔗 Integração com o backend
 
 ### 📍 Endpoint WebSocket
@@ -180,101 +157,11 @@ wss://aqualy.tanz.dev/ws/sensor/{medidorId}
 └─────────┘                           └─────────┘                     └──────────┘
 ```
 
-1. **Sensor → Backend:** Envia leituras a cada 10s via WebSocket SSL
+1. **Sensor → Backend:** Envia leituras a cada 3s via WebSocket SSL
 2. **Backend:** Processa, valida e armazena no banco de dados PostgreSQL
 3. **Backend:** Gera insights com IA baseado nos padrões de consumo
 4. **App → Backend:** Solicita dados via API REST
 5. **App:** Exibe dashboards, gráficos e insights ao usuário
-
----
-
-## 🎯 Funcionalidades implementadas
-
-✅ Conexão WiFi com reconexão automática  
-✅ Cliente WebSocket SSL com TLS  
-✅ Leitura precisa de vazão com sensor YF-S201  
-✅ Cálculo de consumo acumulado em tempo real  
-✅ Envio periódico de dados a cada 10 segundos  
-✅ LED RGB com indicação de status de conexão  
-✅ Protocolo de comunicação customizado  
-✅ Calibração ajustável do sensor  
-✅ Monitoramento via Serial para debug  
-✅ Tratamento de erros e reconexão automática  
-
----
-
-## 🧠 Lógica de medição
-
-### Cálculo de vazão:
-
-```cpp
-// A cada 1 segundo:
-float flowRate = pulseCount / calibrationFactor;  // L/min
-float litrosPorSegundo = flowRate / 60.0;         // L/s
-
-// Acumula consumo:
-consumoLitros += litrosPorSegundo;
-somaVazao += flowRate;
-contagemMedidas++;
-```
-
-### Envio de dados:
-
-```cpp
-// A cada 10 segundos:
-float mediaVazao = somaVazao / contagemMedidas;
-
-// Envia: 01;{id};{consumo};{vazão média}
-String payload = "01;" + device_id + ";" + 
-                 String(consumoLitros, 3) + ";" + 
-                 String(mediaVazao, 2);
-```
-
----
-
-## 🐛 Troubleshooting
-
-### 🔴 LED vermelho permanente
-- Verificar credenciais WiFi no código
-- Confirmar se o backend está online e acessível
-- Verificar URL e porta do WebSocket
-- Testar conectividade de rede
-
-### 📡 Conecta WiFi mas não conecta WebSocket
-- Verificar caminho do WebSocket (`/ws/sensor/{id}`)
-- Confirmar que o ID do medidor existe no backend
-- Validar certificado SSL/TLS
-- Checar firewall e portas
-
-### 💧 Vazão sempre zerada
-- Verificar conexão física do sensor (GPIO 15)
-- Confirmar alimentação do sensor (5V DC)
-- Testar continuidade do cabo
-- Ajustar `calibrationFactor` para o sensor específico
-- Verificar se há fluxo de água real
-
-### 🔵 LED azul permanente
-- Possível travamento na transmissão de dados
-- Reiniciar o ESP32
-- Verificar Serial Monitor para mensagens de erro
-- Validar conectividade com o backend
-
----
-
-## 📊 Especificações técnicas
-
-### Sensor YF-S201:
-- **Tensão:** 5-24V DC
-- **Faixa de vazão:** 1-30 L/min
-- **Precisão:** ±10%
-- **Tipo de sinal:** Pulsos digitais
-- **Fator K:** ~4.5 pulsos/litro (depende do modelo)
-
-### Consumo do sistema:
-- **ESP32 ativo (WiFi):** ~160-260mA
-- **Sensor YF-S201:** ~15mA
-- **LED NeoPixel:** ~20mA (por cor ativa)
-- **Total estimado:** ~200-300mA @ 5V
 
 ---
 

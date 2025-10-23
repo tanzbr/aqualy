@@ -81,7 +81,6 @@ src/
 - `GET /medidores/{id}` — detalhe do medidor
 - `GET /medidores/usuario/{usuarioId}` — por usuário
 - `PUT /medidores/{id}` — atualiza configurações do medidor
-- `DELETE /medidores/{id}` — remove medidor do sistema
 
 #### 🔹 Leituras, Estatísticas e Tempo real
 - `GET /leituras/estatisticas/medidor/{medidorId}?dataInicio&dataFim`
@@ -124,7 +123,7 @@ Entidades e relacionamentos (simplificado):
 
 * Sensor: `Sensor de vazão - modelo YF-S201`
 * Controlador: `ESP32`
-* Comunicação: `<HTTP / MQTT / Serial / WebSocket>`
+* Comunicação: `WebSocket e Serial`
 
 ---
 
@@ -134,7 +133,8 @@ Entidades e relacionamentos (simplificado):
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/giseleveloso/hackagua.git
+git clone https://github.com/tanzbr/aqualy/
+cd aqualy-backend
 
 # Executar em modo dev
 ./mvnw quarkus:dev
@@ -142,23 +142,7 @@ git clone https://github.com/giseleveloso/hackagua.git
 
 **Variáveis de ambiente:**
 
-```
-DEV_DB_TYPE=postgresql
-DEV_DB_USER=topicos1
-DEV_DB_PASSWORD=123456
-DEV_DB_ADDRESS=jdbc:postgresql://localhost:5432/hackagua
-DEV_DB_NAME=aqualy
-
-GEMINI_API_KEY=AIzaSyAeChHj8i7ifk08eRlcF-j2TZDDJSkgMhM
-
-QUARKUS_HTTP_PORT=10017
-```
-
----
-
-## 🧪 Testes
-
-Para testar o envio de dados utilizamos o Swagger UI
+Copie o arquivo .env.example para .env e preencha com as informações necesssárias.
 
 ---
 
