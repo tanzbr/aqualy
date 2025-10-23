@@ -1,4 +1,4 @@
-# 💧 Aqualy - Sistema Inteligente de Monitoramento de Água
+# 💧 Aqualy
 
 <div align="center">
 
