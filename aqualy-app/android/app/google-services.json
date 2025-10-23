@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "362915371993",
+    "project_id": "aqualy-03btc1",
+    "storage_bucket": "aqualy-03btc1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:362915371993:android:c8a2158968554c10b7d7c8",
+        "android_client_info": {
+          "package_name": "dev.tanz.aqualy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAj1PgRhAlwlbiUaCmmidtrDef7oZGLBa4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
