@@ -2,6 +2,7 @@ package br.unitins.topicos1.resource.ws;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jboss.logging.Logger;
@@ -43,16 +44,26 @@ public class PiezoDadosSocket {
         LOG.infof("Frontend conectado - Sensor ID: %s (Total de clientes conectados: %d)", 
                   sensorId, sessions.get(sensorId).size());
         
-        // Envia os dados dos últimos 60 segundos imediatamente
-        try {
-            DadosGraficoDTO dados = leituraPiezoService.obterDadosUltimos60Segundos(sensorId);
-            String json = objectMapper.writeValueAsString(dados);
-            session.getAsyncRemote().sendText(json);
-            LOG.infof("Dados iniciais enviados para cliente - Sensor: %s, Total de leituras: %d", 
-                      sensorId, dados.totalLeituras());
-        } catch (Exception e) {
-            LOG.errorf(e, "Erro ao enviar dados iniciais para sensor: %s", sensorId);
-        }
+        // Envia os dados dos últimos 60 segundos imediatamente de forma assíncrona
+        CompletableFuture.runAsync(() -> {
+            try {
+                DadosGraficoDTO dados = leituraPiezoService.obterDadosUltimos60Segundos(sensorId);
+                String json = objectMapper.writeValueAsString(dados);
+                
+                if (session.isOpen()) {
+                    session.getAsyncRemote().sendText(json, result -> {
+                        if (result.getException() == null) {
+                            LOG.infof("Dados iniciais enviados para cliente - Sensor: %s, Total de leituras: %d", 
+                                      sensorId, dados.totalLeituras());
+                        } else {
+                            LOG.errorf(result.getException(), "Erro ao enviar dados iniciais para sensor: %s", sensorId);
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                LOG.errorf(e, "Erro ao buscar dados iniciais para sensor: %s", sensorId);
+            }
+        });
     }
 
     @OnClose
@@ -91,28 +102,31 @@ public class PiezoDadosSocket {
             return;
         }
 
-        try {
-            DadosGraficoDTO dados = leituraPiezoService.obterDadosUltimos60Segundos(sensorId);
-            String json = objectMapper.writeValueAsString(dados);
-            
-            // Envia para todos os clientes conectados a este sensor
-            sensorSessions.forEach(session -> {
-                if (session.isOpen()) {
-                    session.getAsyncRemote().sendText(json, result -> {
-                        if (result.getException() != null) {
-                            LOG.errorf(result.getException(), 
-                                      "Erro ao enviar atualização para cliente do sensor %s", sensorId);
-                        }
-                    });
-                }
-            });
-            
-            LOG.debugf("Atualização enviada para %d cliente(s) do sensor %s", 
-                      sensorSessions.size(), sensorId);
-            
-        } catch (Exception e) {
-            LOG.errorf(e, "Erro ao notificar nova leitura para sensor: %s", sensorId);
-        }
+        // Executa de forma assíncrona para não bloquear a thread
+        CompletableFuture.runAsync(() -> {
+            try {
+                DadosGraficoDTO dados = leituraPiezoService.obterDadosUltimos60Segundos(sensorId);
+                String json = objectMapper.writeValueAsString(dados);
+                
+                // Envia para todos os clientes conectados a este sensor
+                sensorSessions.forEach(session -> {
+                    if (session.isOpen()) {
+                        session.getAsyncRemote().sendText(json, result -> {
+                            if (result.getException() != null) {
+                                LOG.errorf(result.getException(), 
+                                          "Erro ao enviar atualização para cliente do sensor %s", sensorId);
+                            }
+                        });
+                    }
+                });
+                
+                LOG.debugf("Atualização enviada para %d cliente(s) do sensor %s", 
+                          sensorSessions.size(), sensorId);
+                
+            } catch (Exception e) {
+                LOG.errorf(e, "Erro ao notificar nova leitura para sensor: %s", sensorId);
+            }
+        });
     }
 }
 
