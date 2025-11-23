@@ -2,210 +2,174 @@
 #include <WebSocketsClient.h>
 #include <Adafruit_NeoPixel.h>
 
-// ==== CONFIGURAÇÕES DE REDE ====
-const char* ssid = "BRITO";
-const char* password = "Oi12oi12";
+// ================= CONFIGURAÇÕES =================
+// Rede
+const char* ssid     = "Desafio Industrial FIETO";
+const char* password = "";
 
-// ==== CONFIGURAÇÕES DO WEBSOCKET ====
-const char* ws_host = "aqualy.tanz.dev";
-const uint16_t ws_port = 443;  // Porta HTTPS
-const char* ws_path = "/ws/piezo/sensor01";  // Endpoint do sensor piezoelétrico
-const char* sensor_id = "sensor01";
+// WebSocket
+const char* WS_HOST = "aqualy.tanz.dev";
+const uint16_t WS_PORT = 443;
+const char* WS_PATH = "/ws/piezo/1";
 
-WebSocketsClient webSocket;
+// Piezo
+constexpr uint8_t PIEZO_PIN = 14;
+constexpr int ADC_MAX = 4095;
+constexpr float VREF = 3.3;
+constexpr int SAMPLE_INTERVAL = 100;   // mais responsivo
 
-// ==== SENSOR PIEZOELÉTRICO ====
-const int PIEZO_PIN = 34;  // Pino analógico ADC1_6 (GPIO 34)
-const float ADC_RESOLUTION = 4095.0;  // Resolução ADC 12-bit do ESP32
-const float VOLTAGE_REF = 3.3;  // Tensão de referência do ESP32
-const int SAMPLE_INTERVAL = 1000;  // Intervalo de amostragem em ms (1 segundo)
+// Processamento correto (sem gambiarras)
+constexpr int NUM_SAMPLES = 30;
+constexpr float GAIN = 5.0;
+constexpr int NOISE_THRESHOLD = 10;    // ruído mínimo real
+constexpr float SUAVIZACAO = 0.3; // 0.0 (muito suave) a 1.0 (sem suavização)
 
-unsigned long lastSampleTime = 0;
-
-// ==== LED NEOPIXEL ====
+// LED
 #define LED_PIN 48
 #define NUMPIXELS 1
-#define LED_BRIGHTNESS 50  // Brilho: 0-255 (50 = ~20% de brilho)
+constexpr uint8_t LED_BRIGHTNESS = 50;
+
 Adafruit_NeoPixel pixel(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
+WebSocketsClient webSocket;
 
-// ==== CONTROLE DE CONEXÃO ====
 bool wsConnected = false;
+unsigned long lastSampleTime = 0;
+int leituraAnterior = 0;
+float voltageAnterior = 0.0;
 
-// ==== FUNÇÕES DE LED ====
-void setLedColor(uint8_t r, uint8_t g, uint8_t b) {
-  // Reduz a intensidade de cada cor proporcionalmente
-  uint8_t dimR = (r * LED_BRIGHTNESS) / 255;
-  uint8_t dimG = (g * LED_BRIGHTNESS) / 255;
-  uint8_t dimB = (b * LED_BRIGHTNESS) / 255;
-  
-  pixel.setPixelColor(0, pixel.Color(dimR, dimG, dimB));
+// ================= LED =================
+void setLed(uint8_t r, uint8_t g, uint8_t b) {
+  pixel.setPixelColor(0, pixel.Color(
+    (r * LED_BRIGHTNESS) / 255,
+    (g * LED_BRIGHTNESS) / 255,
+    (b * LED_BRIGHTNESS) / 255
+  ));
   pixel.show();
 }
 
-void ledDesconectado() { setLedColor(255, 0, 0); }     // Vermelho
-void ledConectado() { setLedColor(0, 255, 0); }        // Verde
-void ledEnviando()  { setLedColor(0, 0, 255); }        // Azul
+#define LED_DESCONECTADO() setLed(255,0,0)
+#define LED_CONECTADO()    setLed(0,255,0)
+#define LED_ENVIANDO()     setLed(0,0,255)
+#define LED_VARIACAO()     setLed(255,165,0)
 
-// ==== CALLBACK DO WEBSOCKET ====
+// ================= WEBSOCKET =================
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
   switch(type) {
     case WStype_DISCONNECTED:
-      Serial.println("🔴 WebSocket Desconectado!");
       wsConnected = false;
-      ledDesconectado();
+      LED_DESCONECTADO();
       break;
-      
+
     case WStype_CONNECTED:
-      Serial.println("✅ WebSocket Conectado!");
-      Serial.printf("📍 Conectado em: %s\n", payload);
       wsConnected = true;
-      ledConectado();
+      LED_CONECTADO();
       break;
-      
+
     case WStype_TEXT:
-      Serial.printf("📨 Mensagem recebida: %s\n", payload);
+      Serial.printf("Mensagem: %s\n", payload);
       break;
-      
-    case WStype_ERROR:
-      Serial.printf("❌ Erro WebSocket: %s\n", payload);
-      ledDesconectado();
-      break;
-      
-    case WStype_BIN:
-      Serial.printf("⚠️ Dados binários recebidos (%u bytes)\n", length);
+
+    default:
       break;
   }
 }
 
-// ==== FUNÇÃO PARA LER SENSOR PIEZOELÉTRICO ====
-float lerSensorPiezo() {
-  // Lê o valor do ADC (0-4095)
-  int adcValue = analogRead(PIEZO_PIN);
-  
-  // Converte para voltagem (0-3.3V)
-  float voltage = (adcValue / ADC_RESOLUTION) * VOLTAGE_REF;
-  
-  return voltage;
+// ================= LEITURA ADC =================
+inline int lerADC() {
+  return analogRead(PIEZO_PIN);
 }
 
-// ==== SETUP ====
-void setup() {
-  Serial.begin(115200);
-  delay(100);
-  
-  Serial.println("\n\n========================================");
-  Serial.println("🚀 Iniciando Sistema Piezoelétrico");
-  Serial.println("========================================");
-  
-  // Configurar pino analógico
-  pinMode(PIEZO_PIN, INPUT);
-  
-  // Configurar ADC
-  analogReadResolution(12);  // Resolução de 12 bits (0-4095)
-  analogSetAttenuation(ADC_11db);  // Atenuação para ler até 3.3V
+// ================= PROCESSAMENTO FÍSICAMENTE CORRETO =================
+// Mede variação pico-a-pico real do sinal piezo
+int processarSinal() {
+  int minValue = ADC_MAX;
+  int maxValue = 0;
 
-  // Inicializar LED
-  pixel.begin();
-  ledDesconectado();
-
-  // Conectar WiFi
-  Serial.println("\n📡 Conectando ao WiFi...");
-  Serial.printf("SSID: %s\n", ssid);
-  WiFi.begin(ssid, password);
-
-  int tentativas = 0;
-  while (WiFi.status() != WL_CONNECTED && tentativas < 30) {
-    delay(500);
-    Serial.print(".");
-    tentativas++;
+  for(int i = 0; i < NUM_SAMPLES; i++) {
+    int leitura = lerADC();
+    if (leitura < minValue) minValue = leitura;
+    if (leitura > maxValue) maxValue = leitura;
+    delayMicroseconds(150);
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n✅ WiFi Conectado!");
-    Serial.print("📍 IP Local: ");
-    Serial.println(WiFi.localIP());
-    Serial.print("📶 RSSI: ");
-    Serial.print(WiFi.RSSI());
-    Serial.println(" dBm");
-  } else {
-    Serial.println("\n❌ Falha ao conectar WiFi!");
-    return;
-  }
+  // Diferença real de variação do sinal (sem offset artificial)
+  int variacao = maxValue - minValue;
 
-  // Configurar WebSocket
-  Serial.println("\n🔌 Configurando WebSocket...");
-  Serial.printf("Host: %s\n", ws_host);
-  Serial.printf("Porta: %u\n", ws_port);
-  Serial.printf("Path: %s\n", ws_path);
-  Serial.printf("Sensor ID: %s\n", sensor_id);
-  
-  // Configurar SSL/TLS
-  webSocket.beginSSL(ws_host, ws_port, ws_path);
-  
-  // Configurar evento
-  webSocket.onEvent(webSocketEvent);
-  
-  // Configurar reconexão automática
-  webSocket.setReconnectInterval(5000);
-  
-  // Configurar headers customizados
-  webSocket.setExtraHeaders("Origin: https://aqualy.tanz.dev");
-  
-  Serial.println("✅ WebSocket configurado!");
-  Serial.println("========================================\n");
-  
-  Serial.println("📊 Iniciando leituras do sensor piezoelétrico...");
-  Serial.println("⏱️  Intervalo de envio: 1 segundo\n");
+  int sinal = variacao * GAIN;
+
+  if (sinal < NOISE_THRESHOLD) return 0;
+  if (sinal > 65535) sinal = 65535;
+
+  return sinal;
 }
 
-// ==== LOOP PRINCIPAL ====
-void loop() {
-  // Processar eventos WebSocket
-  webSocket.loop();
-
-  // Verificar WiFi
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("🔴 WiFi desconectado! Tentando reconectar...");
-    ledDesconectado();
-    WiFi.begin(ssid, password);
-    delay(5000);
-    return;
-  }
-
-  unsigned long currentTime = millis();
-
-  // Ler e enviar dados do sensor a cada 1 segundo
-  if (currentTime - lastSampleTime >= SAMPLE_INTERVAL) {
-    // Ler sensor piezoelétrico
-    float voltage = lerSensorPiezo();
-    
-    // Exibir no monitor serial
-    Serial.print("⚡ Leitura Piezoelétrica: ");
-    Serial.print(voltage, 3);
-    Serial.println(" V");
-    
-    // Enviar dados via WebSocket
-    enviarDados(voltage);
-    
-    lastSampleTime = currentTime;
-  }
+float converterVoltagem(int sinal) {
+  return (sinal / GAIN / ADC_MAX) * VREF;
 }
 
-// ==== FUNÇÃO DE ENVIO DE DADOS ====
-void enviarDados(float voltage) {
-  if (!wsConnected) {
-    Serial.println("⚠️ WebSocket desconectado - não enviando dados");
-    return;
+// ================= SUAVIZAÇÃO =================
+float suavizarLeitura(float novaLeitura) {
+  if (voltageAnterior == 0.0) {
+    voltageAnterior = novaLeitura;
+    return novaLeitura;
   }
+  voltageAnterior = (SUAVIZACAO * novaLeitura) + ((1.0 - SUAVIZACAO) * voltageAnterior);
+  return voltageAnterior;
+}
 
-  ledEnviando();
-  
-  // Enviar apenas o valor da voltagem (formato simples)
+// ================= ENVIO =================
+void enviarDados(int sinal, float voltage) {
+  if (!wsConnected) return;
+
+  bool mudou = (sinal != 0 && sinal != leituraAnterior);
+  mudou ? LED_VARIACAO() : LED_ENVIANDO();
+
   String payload = String(voltage, 3);
   webSocket.sendTXT(payload);
-  
-  Serial.println("📤 Dados enviados: " + payload);
-  
-  delay(100);
-  ledConectado();
+
+  leituraAnterior = sinal;
+  delay(20);
+  LED_CONECTADO();
+}
+
+// ================= SETUP =================
+void setup() {
+  Serial.begin(115200);
+  pinMode(PIEZO_PIN, INPUT);
+
+  analogReadResolution(12);
+  analogSetAttenuation(ADC_11db);
+
+  pixel.begin();
+  LED_DESCONECTADO();
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+
+  webSocket.beginSSL(WS_HOST, WS_PORT, WS_PATH);
+  webSocket.onEvent(webSocketEvent);
+  webSocket.setReconnectInterval(5000);
+  webSocket.setExtraHeaders("Origin: https://aqualy.tanz.dev");
+}
+
+// ================= LOOP =================
+void loop() {
+  webSocket.loop();
+
+  if (millis() - lastSampleTime >= SAMPLE_INTERVAL) {
+    int sinal = processarSinal();
+    float tensao = converterVoltagem(sinal);
+    float tensaoSuavizada = suavizarLeitura(tensao);
+
+    Serial.print("Sinal digital: ");
+    Serial.print(sinal);
+    Serial.print(" | Voltagem bruta: ");
+    Serial.print(tensao, 3);
+    Serial.print(" V | Suavizada: ");
+    Serial.print(tensaoSuavizada, 3);
+    Serial.println(" V");
+
+    enviarDados(sinal, tensaoSuavizada);
+    lastSampleTime = millis();
+  }
 }
