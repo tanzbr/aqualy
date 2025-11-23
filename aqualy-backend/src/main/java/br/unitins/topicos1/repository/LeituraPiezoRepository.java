@@ -22,6 +22,12 @@ public class LeituraPiezoRepository implements PanacheRepository<LeituraPiezo> {
     public List<LeituraPiezo> findAllBySensorId(String sensorId) {
         return find("sensorId = ?1 ORDER BY dataHora DESC", sensorId).list();
     }
+    
+    public List<LeituraPiezo> findUltimosSegundos(String sensorId, int segundos) {
+        LocalDateTime dataLimite = LocalDateTime.now().minusSeconds(segundos);
+        return find("sensorId = ?1 AND dataHora >= ?2 ORDER BY dataHora ASC", 
+                    sensorId, dataLimite).list();
+    }
 }
 
 

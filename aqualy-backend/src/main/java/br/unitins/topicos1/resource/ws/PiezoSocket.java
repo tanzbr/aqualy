@@ -30,6 +30,9 @@ public class PiezoSocket {
     @Inject
     LeituraPiezoService leituraPiezoService;
 
+    @Inject
+    PiezoDadosSocket piezoDadosSocket;
+
     @OnOpen
     public void onOpen(Session session, @PathParam("sensorId") String sensorId) {
         sessions.put(sensorId, session);
@@ -62,6 +65,13 @@ public class PiezoSocket {
             }).whenComplete((v, t) -> {
                 if (t == null) {
                     LOG.infof("Leitura piezoelétrica registrada - Sensor: %s, Valor: %s", sensorId, message);
+                    
+                    // Notifica os clientes frontend conectados sobre a nova leitura
+                    try {
+                        piezoDadosSocket.notificarNovaLeitura(sensorId);
+                    } catch (Exception e) {
+                        LOG.errorf(e, "Erro ao notificar clientes frontend do sensor: %s", sensorId);
+                    }
                 } else {
                     LOG.errorf(t, "Erro ao processar mensagem: %s", message);
                 }
