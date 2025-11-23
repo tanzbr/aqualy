@@ -1,6 +1,7 @@
 package br.unitins.topicos1.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,12 +23,24 @@ public class LeituraPiezoServiceImpl implements LeituraPiezoService {
 
     @Inject
     LeituraPiezoRepository leituraPiezoRepository;
+    
+    // Coeficiente piezoelétrico fictício para conversão de voltagem (V) para força (N)
+    // Material fictício baseado em cerâmica piezoelétrica PZT com sensibilidade de 500 pC/N
+    // Considerando capacitância do sensor: 100 nF
+    // Fator de conversão: 1 V = 200 N (para simplificar o cálculo)
+    private static final BigDecimal COEFICIENTE_PIEZOELETRICO = new BigDecimal("200.0");
 
     @Override
     @Transactional
     public LeituraPiezoResponseDTO registrarLeitura(@Valid LeituraPiezoDTO dto) {
         LeituraPiezo leitura = new LeituraPiezo();
         leitura.setValor(dto.valor());
+        
+        // Converte o valor (voltagem) para Newtons usando o coeficiente piezoelétrico
+        BigDecimal valorNewtons = dto.valor().multiply(COEFICIENTE_PIEZOELETRICO)
+                .setScale(3, RoundingMode.HALF_UP);
+        leitura.setValorNewtons(valorNewtons);
+        
         leitura.setSensorId(dto.sensorId());
         leitura.setDataHora(LocalDateTime.now());
 
@@ -50,7 +63,11 @@ public class LeituraPiezoServiceImpl implements LeituraPiezoService {
                     .map(LeituraPiezo::getValor)
                     .collect(Collectors.toList());
             
-            return DadosGraficoDTO.criar(sensorId, timestamps, valores);
+            List<BigDecimal> valoresNewtons = leituras.stream()
+                    .map(LeituraPiezo::getValorNewtons)
+                    .collect(Collectors.toList());
+            
+            return DadosGraficoDTO.criar(sensorId, timestamps, valores, valoresNewtons);
         });
     }
 }

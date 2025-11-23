@@ -8,6 +8,7 @@ import br.unitins.topicos1.model.LeituraPiezo;
 public record LeituraPiezoResponseDTO(
     Long id,
     BigDecimal valor,
+    BigDecimal valorNewtons,
     LocalDateTime dataHora,
     String sensorId
 ) {
@@ -15,6 +16,7 @@ public record LeituraPiezoResponseDTO(
         return new LeituraPiezoResponseDTO(
             leitura.getId(),
             leitura.getValor(),
+            leitura.getValorNewtons(),
             leitura.getDataHora(),
             leitura.getSensorId()
         );

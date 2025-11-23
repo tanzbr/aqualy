@@ -14,10 +14,13 @@ public record DadosGraficoDTO(
     
     List<BigDecimal> valores,
     
+    List<BigDecimal> valoresNewtons,
+    
     Integer totalLeituras
 ) {
-    public static DadosGraficoDTO criar(String sensorId, List<LocalDateTime> timestamps, List<BigDecimal> valores) {
-        return new DadosGraficoDTO(sensorId, timestamps, valores, valores.size());
+    public static DadosGraficoDTO criar(String sensorId, List<LocalDateTime> timestamps, 
+                                        List<BigDecimal> valores, List<BigDecimal> valoresNewtons) {
+        return new DadosGraficoDTO(sensorId, timestamps, valores, valoresNewtons, valores.size());
     }
 }
 

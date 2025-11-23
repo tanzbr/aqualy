@@ -12,6 +12,9 @@ public class LeituraPiezo extends DefaultEntity {
     @Column(precision = 10, scale = 3, nullable = false)
     private BigDecimal valor;
     
+    @Column(name = "valor_newtons", precision = 10, scale = 3, nullable = false)
+    private BigDecimal valorNewtons;
+    
     @Column(name = "data_hora", nullable = false)
     private LocalDateTime dataHora;
     
@@ -24,6 +27,14 @@ public class LeituraPiezo extends DefaultEntity {
 
     public void setValor(BigDecimal valor) {
         this.valor = valor;
+    }
+
+    public BigDecimal getValorNewtons() {
+        return valorNewtons;
+    }
+
+    public void setValorNewtons(BigDecimal valorNewtons) {
+        this.valorNewtons = valorNewtons;
     }
 
     public LocalDateTime getDataHora() {
