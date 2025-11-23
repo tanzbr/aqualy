@@ -12,6 +12,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import br.unitins.topicos1.dto.DadosGraficoDTO;
 import br.unitins.topicos1.service.LeituraPiezoService;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.OnClose;
@@ -91,42 +92,53 @@ public class PiezoDadosSocket {
     }
 
     /**
-     * Método chamado pelo PiezoSocket quando uma nova leitura é registrada.
-     * Envia os dados atualizados para todos os clientes conectados ao sensor.
+     * Método agendado que envia dados atualizados a cada 1 segundo
+     * para todos os clientes conectados.
      */
-    public void notificarNovaLeitura(String sensorId) {
-        Set<Session> sensorSessions = sessions.get(sensorId);
-        
-        if (sensorSessions == null || sensorSessions.isEmpty()) {
-            // Nenhum cliente conectado a este sensor
-            return;
-        }
-
-        // Executa de forma assíncrona para não bloquear a thread
-        CompletableFuture.runAsync(() -> {
-            try {
-                DadosGraficoDTO dados = leituraPiezoService.obterDadosUltimos60Segundos(sensorId);
-                String json = objectMapper.writeValueAsString(dados);
-                
-                // Envia para todos os clientes conectados a este sensor
-                sensorSessions.forEach(session -> {
-                    if (session.isOpen()) {
-                        session.getAsyncRemote().sendText(json, result -> {
-                            if (result.getException() != null) {
-                                LOG.errorf(result.getException(), 
-                                          "Erro ao enviar atualização para cliente do sensor %s", sensorId);
+    @Scheduled(every = "1s")
+    void enviarDadosAutomaticamente() {
+        // Para cada sensor que tem clientes conectados
+        sessions.keySet().forEach(sensorId -> {
+            Set<Session> sensorSessions = sessions.get(sensorId);
+            
+            if (sensorSessions != null && !sensorSessions.isEmpty()) {
+                // Executa de forma assíncrona
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        DadosGraficoDTO dados = leituraPiezoService.obterDadosUltimos60Segundos(sensorId);
+                        String json = objectMapper.writeValueAsString(dados);
+                        
+                        // Envia para todos os clientes conectados a este sensor
+                        sensorSessions.forEach(session -> {
+                            if (session.isOpen()) {
+                                session.getAsyncRemote().sendText(json, result -> {
+                                    if (result.getException() != null) {
+                                        LOG.errorf(result.getException(), 
+                                                  "Erro ao enviar atualização automática para cliente do sensor %s", sensorId);
+                                    }
+                                });
                             }
                         });
+                        
+                        LOG.tracef("Atualização automática enviada para %d cliente(s) do sensor %s", 
+                                  sensorSessions.size(), sensorId);
+                        
+                    } catch (Exception e) {
+                        LOG.errorf(e, "Erro ao enviar atualização automática para sensor: %s", sensorId);
                     }
                 });
-                
-                LOG.debugf("Atualização enviada para %d cliente(s) do sensor %s", 
-                          sensorSessions.size(), sensorId);
-                
-            } catch (Exception e) {
-                LOG.errorf(e, "Erro ao notificar nova leitura para sensor: %s", sensorId);
             }
         });
+    }
+
+    /**
+     * Método chamado pelo PiezoSocket quando uma nova leitura é registrada.
+     * Não é mais necessário pois o scheduler já envia os dados a cada 1 segundo.
+     * Mantido para compatibilidade, mas pode ser removido se desejar.
+     */
+    public void notificarNovaLeitura(String sensorId) {
+        // Método mantido para compatibilidade, mas o scheduler já cuida do envio
+        LOG.debugf("Nova leitura registrada para sensor %s (envio automático pelo scheduler)", sensorId);
     }
 }
 
